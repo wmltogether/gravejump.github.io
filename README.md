@@ -2,6 +2,10 @@
 
 PixiJS + TypeScript 竖屏动作游戏。绿发贝斯少女在废弃音乐厅中自动跳跃，躲避落石、雕像和十字架。
 
+> **生成式 AI 声明**
+>
+> 本项目完全通过生成式人工智能（Generative AI）创作完成，涵盖游戏代码、SVG 美术、界面设计、音效实现、测试及文档。人类负责提出创意、定义需求与提供反馈，生成式 AI 负责具体实现与持续迭代。
+
 [直接游玩](https://wmltogether.github.io/gravejump.github.io/)
 
 ## 项目结构
