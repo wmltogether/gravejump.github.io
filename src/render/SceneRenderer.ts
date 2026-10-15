@@ -45,6 +45,7 @@ export async function createSceneRenderer(
     "note",
     "cucumber",
     "rocket",
+    "golden-star",
     "penguin",
     "bassist-back",
     "bassist-body",
@@ -253,11 +254,27 @@ export async function createSceneRenderer(
             ? texture.cucumber
             : n.kind === "rocket"
               ? texture.rocket
-              : texture.note,
+              : n.kind === "star"
+                ? texture["golden-star"]
+                : texture.note,
         );
         v.anchor.set(0.5);
-        v.width = n.kind === "cucumber" ? 48 : n.kind === "rocket" ? 36 : 39;
-        v.height = n.kind === "cucumber" ? 36 : n.kind === "rocket" ? 50 : 39;
+        v.width =
+          n.kind === "star"
+            ? 70
+            : n.kind === "cucumber"
+              ? 48
+              : n.kind === "rocket"
+                ? 36
+                : 39;
+        v.height =
+          n.kind === "star"
+            ? 70
+            : n.kind === "cucumber"
+              ? 36
+              : n.kind === "rocket"
+                ? 50
+                : 39;
         return v;
       },
       (v, n) => {
@@ -265,6 +282,10 @@ export async function createSceneRenderer(
           n.x,
           n.y - game.cameraY + (reduced ? 0 : Math.sin(time * 3 + n.id) * 5),
         );
+        if (n.kind === "star") {
+          v.rotation = reduced ? 0 : Math.sin(time * 2.5 + n.id) * 0.12;
+          v.alpha = reduced ? 1 : 0.85 + Math.sin(time * 4 + n.id) * 0.15;
+        }
       },
     );
     sync(
@@ -288,9 +309,9 @@ export async function createSceneRenderer(
       penguinViews,
       () => {
         const v = new PIXI.Sprite(texture.penguin);
-        v.anchor.set(0.5, 66 / 72);
-        v.width = 44;
-        v.height = 50;
+        v.anchor.set(0.5, C.PENGUIN_DRAW_ANCHOR_Y);
+        v.width = C.PENGUIN_DRAW_WIDTH;
+        v.height = C.PENGUIN_DRAW_HEIGHT;
         return v;
       },
       (v, e) => {

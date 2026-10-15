@@ -1299,6 +1299,30 @@ body.viewport-fit .overlay-card {
   width: 18px;
   height: 18px;
 }
+.star-status {
+  position: absolute;
+  top: 14px;
+  right: 12px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 10px 3px 3px;
+  border: 1px solid #ffdf7955;
+  border-radius: 12px;
+  background: #352b26df;
+  color: #ffe69a;
+  pointer-events: none;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.star-status > img {
+  width: 34px;
+  height: 34px;
+}
+.rocket-status:not([hidden]) + .star-status {
+  top: 76px;
+}
 .rocket-track {
   position: absolute;
   bottom: 5px;

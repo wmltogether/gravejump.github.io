@@ -62,7 +62,7 @@ export interface HazardWarning {
 }
 
 export interface Pickup {
-  kind?: "note" | "cucumber" | "rocket";
+  kind?: "note" | "cucumber" | "rocket" | "star";
   id: number;
   x: number;
   y: number;
@@ -82,6 +82,8 @@ export type GameEvent =
   | { type: "jump"; x: number; y: number; manual: boolean }
   | { type: "land" | "note" | "hit"; x: number; y: number }
   | { type: "heal"; x: number; y: number; restored: number }
+  | { type: "star"; x: number; y: number; restored: number }
+  | { type: "purge"; x: number; y: number }
   | { type: "rocket" | "stomp" | "throw"; x: number; y: number }
   | { type: "hazard" }
   | { type: "music"; tier: number; floor: number }

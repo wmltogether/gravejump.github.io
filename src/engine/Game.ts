@@ -34,6 +34,8 @@ export class Game {
   floor = 0;
   musicTier = 0;
   rocketTime = 0;
+  /** Remaining simulation seconds in which penguins cannot spawn or enter view. */
+  penguinSuppressionTime = 0;
   penguins: Penguin[] = [];
   player!: Player;
   platforms: Platform[] = [];
@@ -61,6 +63,7 @@ export class Game {
     this.height = this.notes = this.landings = 0;
     this.floor = this.musicTier = 0;
     this.rocketTime = 0;
+    this.penguinSuppressionTime = 0;
     this.penguins = [];
     this.lives = C.MAX_LIVES;
     this.status = "ready";
@@ -121,6 +124,8 @@ export class Game {
     if (dt === 0) return;
     this.time += dt;
     this.invulnerable = Math.max(0, this.invulnerable - dt);
+    this.penguinSuppressionTime = Math.max(0, this.penguinSuppressionTime - dt);
+    if (this.penguinSuppressionTime < 1e-8) this.penguinSuppressionTime = 0;
     this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);
     if (input.jumpPressed) this.jumpBuffer = C.BUFFER;
 
@@ -129,6 +134,7 @@ export class Game {
     player.prevY = player.y;
     this.moveHorizontally(dt, input);
     this.movePlatforms(dt);
+    if (this.penguinSuppressionTime > 0) this.purgeVisiblePenguins();
     this.updatePenguins(dt);
     const rocketAtStepStart = this.rocketTime > 0;
     if (rocketAtStepStart) this.moveWithRocket(dt, input);
@@ -149,6 +155,8 @@ export class Game {
     this.updateCameraAndHeight();
     this.generatePlatforms();
     this.collectPickups();
+    // Includes pre-generated enemies revealed by upward camera movement this step.
+    if (this.penguinSuppressionTime > 0) this.purgeVisiblePenguins();
     this.updateHazards(dt, rocketAtStepStart || this.rocketTime > 0);
     this.removeOffscreenObjects();
 
@@ -392,7 +400,7 @@ export class Game {
           y: platform.y - 38,
           collected: false,
         });
-      if (level % 9 === 8)
+      if (level % 9 === 8 && this.penguinSuppressionTime === 0)
         this.penguins.push({
           id: level,
           platformId: level,
@@ -400,6 +408,14 @@ export class Game {
           y: platform.y,
           alive: true,
           throwTimer: 1.2,
+        });
+      if (level % C.STAR_FLOOR_INTERVAL === C.STAR_FIRST_FLOOR)
+        this.pickups.push({
+          kind: "star",
+          id: 200000 + level,
+          x: x + 35,
+          y: platform.y - 42,
+          collected: false,
         });
       if (level % 3 === 0)
         this.pickups.push({
@@ -444,6 +460,12 @@ export class Game {
           y: item.y,
           restored: this.lives - before,
         });
+      } else if (item.kind === "star") {
+        const restored = C.MAX_LIVES - this.lives;
+        this.lives = C.MAX_LIVES;
+        this.penguinSuppressionTime = C.STAR_SECONDS;
+        this.purgeVisiblePenguins();
+        this.events.push({ type: "star", x: item.x, y: item.y, restored });
       } else if (item.kind === "rocket") {
         this.rocketTime = C.ROCKET_SECONDS;
         player.grounded = false;
@@ -458,6 +480,35 @@ export class Game {
         this.events.push({ type: "note", x: item.x, y: item.y });
       }
     }
+  }
+
+  private purgeVisiblePenguins(): void {
+    const killed = new Set<number>();
+    for (const enemy of this.penguins) {
+      if (
+        !enemy.alive ||
+        enemy.x + C.PENGUIN_DRAW_WIDTH / 2 < 0 ||
+        enemy.x - C.PENGUIN_DRAW_WIDTH / 2 > C.WIDTH ||
+        enemy.y + C.PENGUIN_DRAW_HEIGHT * (1 - C.PENGUIN_DRAW_ANCHOR_Y) <
+          this.cameraY ||
+        enemy.y - C.PENGUIN_DRAW_HEIGHT * C.PENGUIN_DRAW_ANCHOR_Y >
+          this.cameraY + this.viewHeight
+      )
+        continue;
+      enemy.alive = false;
+      killed.add(enemy.id);
+      this.events.push({
+        type: "purge",
+        x: enemy.x,
+        y: enemy.y - C.PENGUIN_HEIGHT / 2,
+      });
+    }
+    // Clear attacks from defeated penguins, including stones thrown on this step.
+    if (killed.size)
+      this.hazards = this.hazards.filter(
+        (hazard) =>
+          hazard.source !== "penguin" || !killed.has(hazard.ownerId ?? -1),
+      );
   }
 
   private updateHazards(dt: number, rocketProtected = false): void {

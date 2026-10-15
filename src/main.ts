@@ -259,6 +259,16 @@ async function bootstrap(): Promise<void> {
               ? `恢复一颗生命，当前 ${game.lives} 颗心。`
               : "吃掉黄瓜，生命已满。";
           break;
+        case "star":
+          scene.burst(event.x, event.y, 0xffdf79, 26);
+          ui.heal(event.x, event.y, event.restored, "star");
+          sound.play("note");
+          element("announcement").textContent =
+            "金星清场，生命已回满，十秒内不会出现新企鹅。";
+          break;
+        case "purge":
+          scene.burst(event.x, event.y, 0xffeab0, 18);
+          break;
         case "rocket":
           scene.burst(event.x, event.y, 0x9bdee7, 18);
           sound.play("note");

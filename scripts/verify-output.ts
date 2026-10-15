@@ -54,6 +54,7 @@ for (const name of [
   "note",
   "cucumber",
   "rocket",
+  "golden-star",
   "penguin",
   "hazard-rock",
   "hazard-statue",

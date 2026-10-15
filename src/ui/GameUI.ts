@@ -7,7 +7,12 @@ export interface GameUI {
   show(mode: "over" | "paused" | "help"): void;
   hide(): void;
   reset(): void;
-  heal(x: number, y: number, restored: number): void;
+  heal(
+    x: number,
+    y: number,
+    restored: number,
+    source?: "cucumber" | "star",
+  ): void;
 }
 /** DOM-only status and menus. Persistent records are isolated from simulation. */
 export function createGameUI(game: Game, onMilestone: () => void): GameUI {
@@ -51,6 +56,7 @@ export function createGameUI(game: Game, onMilestone: () => void): GameUI {
       game.status,
       game.invulnerable > 0,
       Math.ceil(game.rocketTime * 10),
+      Math.ceil(game.penguinSuppressionTime * 10),
     ].join("|");
     if (key === lastHUD) return;
     lastHUD = key;
@@ -74,6 +80,9 @@ export function createGameUI(game: Game, onMilestone: () => void): GameUI {
     $("rocket-seconds").textContent = game.rocketTime.toFixed(1);
     $("rocket-meter").style.width =
       `${(game.rocketTime / C.ROCKET_SECONDS) * 100}%`;
+    $("star-status").hidden = game.penguinSuppressionTime <= 0;
+    $("star-seconds").textContent =
+      `${Math.ceil(game.penguinSuppressionTime)}s`;
     $<HTMLButtonElement>("pause").disabled =
       game.status === "ready" || game.status === "over";
     $("pause").setAttribute(
@@ -140,7 +149,7 @@ export function createGameUI(game: Game, onMilestone: () => void): GameUI {
       label.textContent = "";
       title.textContent = "操作说明";
       description.innerHTML =
-        "← → / A D：左右移动<br>空格 / ↑ / W：起跳，长按跳得更高<br>红色 ! 出现 1 秒后会落下坠落物，及时闪开<br>黄瓜恢复 1 颗心，上限 5 颗；满血也会吃掉<br>火箭冲刺 3 秒，免疫伤害；左右仍可移动<br>企鹅会投石，从上方踩中可击败<br>石台只接住向下落的脚；掉出画面就结束";
+        "← → / A D：左右移动<br>空格 / ↑ / W：起跳，长按跳得更高<br>红色 ! 出现 1 秒后会落下坠落物，及时闪开<br>黄瓜恢复 1 颗心，上限 5 颗；满血也会吃掉<br>金星清除屏内企鹅、回满血，10 秒内不出现新企鹅<br>火箭冲刺 3 秒，免疫伤害；左右仍可移动<br>企鹅会投石，从上方踩中可击败<br>石台只接住向下落的脚；掉出画面就结束";
       button.innerHTML = '开始游戏 <svg><use href="#arrow"/></svg>';
       tip.textContent = "自动跳跃始终开启 · 手机按住画布左 / 右侧移动";
       $("secondary").hidden = true;
@@ -155,17 +164,23 @@ export function createGameUI(game: Game, onMilestone: () => void): GameUI {
     hide() {
       $("overlay").hidden = true;
     },
-    heal(x, y, restored) {
+    heal(x, y, restored, source = "cucumber") {
       const popup = $("heal-callout");
       clearTimeout(healTimer);
       popup.classList.remove("visible");
       popup.innerHTML =
-        restored > 0
-          ? '<svg aria-hidden="true"><use href="#heart"/></svg><b>+1</b>'
-          : '<img src="cucumber.svg" alt="黄瓜"/><svg aria-hidden="true"><use href="#star"/></svg>';
+        source === "star"
+          ? `<img draggable="false" src="golden-star.svg" alt="金星"/><svg aria-hidden="true"><use href="#heart"/></svg>${restored > 0 ? `<b>+${restored}</b>` : ""}`
+          : restored > 0
+            ? `<svg aria-hidden="true"><use href="#heart"/></svg><b>+${restored}</b>`
+            : '<img src="cucumber.svg" alt="黄瓜"/><svg aria-hidden="true"><use href="#star"/></svg>';
       popup.setAttribute(
         "aria-label",
-        restored > 0 ? "恢复一颗生命" : "吃掉黄瓜，生命已满",
+        source === "star"
+          ? "金星清场，生命已回满"
+          : restored > 0
+            ? "恢复一颗生命"
+            : "吃掉黄瓜，生命已满",
       );
       popup.style.left = `${Math.max(15, Math.min(85, (x / C.WIDTH) * 100))}%`;
       popup.style.top = `${Math.max(18, Math.min(80, ((y - game.cameraY - 75) / game.viewHeight) * 100))}%`;

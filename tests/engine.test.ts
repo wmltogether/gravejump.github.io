@@ -37,6 +37,164 @@ function airborne(g: Game, x = 420, y = 600, vy = 250) {
   });
   g.coyote = 0;
 }
+
+function eatStar(g: Game) {
+  g.pickups = [
+    {
+      kind: "star",
+      id: 900002,
+      x: g.player.x,
+      y: g.player.y - (75 * C.PLAYER_SCALE) / 0.74,
+      collected: false,
+    },
+  ];
+  g.step(dt);
+}
+
+test("golden star heals to five, clears even partly visible penguins and their stones exactly once", () => {
+  const g = game();
+  g.lives = 1;
+  const positions = [
+    { x: 200, y: 400 },
+    { x: 300, y: -3 },
+    { x: 600, y: g.viewHeight + 44 },
+    { x: 700, y: -100 },
+    { x: -100, y: 400 },
+  ];
+  g.penguins = positions.map((p, i) => ({
+    id: 900 + i,
+    platformId: 900 + i,
+    ...p,
+    alive: true,
+    throwTimer: 0,
+  }));
+  g.platforms.push(
+    ...positions.map((p, i) => ({
+      id: 900 + i,
+      ...p,
+      baseX: p.x,
+      w: 150,
+      moving: false,
+    })),
+  );
+  g.hazards = [
+    {
+      source: "penguin",
+      ownerId: 900,
+      x: 100,
+      y: 200,
+      vy: 0,
+      r: 12,
+      rotation: 0,
+      spin: 0,
+    },
+    { source: "sky", x: 120, y: 200, vy: 0, r: 12, rotation: 0, spin: 0 },
+  ];
+  eatStar(g);
+  assert.equal(g.lives, 5);
+  assert.equal(g.penguinSuppressionTime, 10);
+  assert.deepEqual(
+    g.penguins.filter((e) => e.id >= 900).map((e) => e.id),
+    [903, 904],
+  );
+  assert.ok(g.hazards.every((h) => h.source !== "penguin"));
+  assert.ok(g.hazards.some((h) => h.source === "sky"));
+  assert.equal(
+    g.pickups.some((p) => p.id === 900002),
+    false,
+  );
+  const events = g.drainEvents();
+  assert.equal(events.filter((e) => e.type === "purge").length, 3);
+  assert.equal(events.filter((e) => e.type === "star").length, 1);
+  assert.ok(events.some((e) => e.type === "star" && e.restored === 4));
+  g.step(dt);
+  assert.equal(
+    g.drainEvents().some((e) => e.type === "star"),
+    false,
+  );
+});
+
+test("star lasts exactly ten active seconds, consumes at full health and refreshes without stacking", () => {
+  const g = game();
+  eatStar(g);
+  assert.equal(g.lives, 5);
+  steps(g, 120);
+  assert.ok(Math.abs(g.penguinSuppressionTime - 9) < 1e-8);
+  g.pause();
+  steps(g, 240);
+  assert.ok(Math.abs(g.penguinSuppressionTime - 9) < 1e-8);
+  g.pause();
+  eatStar(g);
+  assert.equal(g.penguinSuppressionTime, 10);
+  steps(g, 1199);
+  assert.ok(g.penguinSuppressionTime > 0);
+  g.step(dt);
+  assert.equal(g.penguinSuppressionTime, 0);
+  eatStar(g);
+  g.start();
+  assert.equal(g.penguinSuppressionTime, 0);
+});
+
+test("star suppresses newly generated penguins and normal generation resumes after expiry", () => {
+  const g = game();
+  eatStar(g);
+  g.pickups = [];
+  g.cameraY = -2000;
+  airborne(g, 420, -1600, 0);
+  const oldHighest = Math.max(...g.platforms.map((p) => p.id));
+  g.step(dt);
+  const newPlatforms = g.platforms.filter(
+    (p) => p.id > oldHighest && p.id % 9 === 8,
+  );
+  assert.ok(newPlatforms.length > 0);
+  assert.ok(
+    newPlatforms.every((p) => !g.penguins.some((e) => e.platformId === p.id)),
+  );
+  g.penguinSuppressionTime = dt;
+  g.cameraY = -4000;
+  airborne(g, 420, -3600, 0);
+  g.step(dt);
+  assert.equal(g.penguinSuppressionTime, 0);
+  assert.ok(g.penguins.length > 0);
+});
+
+test("pre-generated offscreen penguins cannot enter view during the star effect", () => {
+  const g = game();
+  g.platforms.push({
+    id: 900,
+    x: 220,
+    baseX: 220,
+    y: -100,
+    w: 150,
+    moving: false,
+  });
+  g.penguins = [
+    { id: 900, platformId: 900, x: 220, y: -100, alive: true, throwTimer: 0 },
+  ];
+  eatStar(g);
+  assert.equal(g.penguins.length, 1);
+  g.cameraY = -200;
+  g.step(dt);
+  assert.equal(g.penguins.length, 0);
+  assert.equal(
+    g.hazards.some((h) => h.ownerId === 900),
+    false,
+  );
+});
+
+test("golden stars spawn on platforms every thirty floors starting at floor twelve", () => {
+  const g = new Game({ random: seeded(), autoJump: false, viewHeight: 8000 });
+  g.start();
+  const stars = g.pickups.filter((p) => p.kind === "star");
+  assert.ok(stars.length >= 2);
+  for (const star of stars) {
+    const platform = g.platforms.find((p) => p.id === star.id - 200000)!;
+    assert.ok(platform);
+    assert.equal(platform.id % 30, 12);
+    assert.ok(Math.abs(star.x - platform.x) < platform.w / 2);
+    assert.equal(star.y, platform.y - 42);
+  }
+});
 test("30/60/120/144 Hz render rates produce identical physics and RNG progression", () => {
   const results = [];
   for (const fps of [30, 60, 120, 144]) {
