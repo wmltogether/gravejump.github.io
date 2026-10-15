@@ -1315,3 +1315,21 @@ body.viewport-fit .overlay-card {
   height: 100%;
   background: #b5e8e5;
 }
+/* H5 hold controls own gestures on the canvas and its descendants, including SVG/text. */
+.game-viewport,
+.game-viewport *,
+.touch-controls,
+.touch-controls * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.game-viewport,
+#scene,
+#scene canvas,
+.touch-controls,
+.touch-controls button {
+  touch-action: none;
+}

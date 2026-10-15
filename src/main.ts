@@ -26,6 +26,7 @@ async function bootstrap(): Promise<void> {
     autoDensity: false,
     preference: "webgl",
   });
+  app.canvas.draggable = false;
   host.appendChild(app.canvas);
   app.canvas.style.width = "100%";
   app.canvas.style.height = "100%";

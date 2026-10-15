@@ -26,13 +26,18 @@ function event(type: string, properties: Record<string, unknown>): Event {
   return Object.assign(new Event(type, { cancelable: true }), properties);
 }
 
-function fixture(context: import("node:test").TestContext) {
+function fixture(
+  context: import("node:test").TestContext,
+  pointerEvents = true,
+) {
   const previousWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
   const previousDocument = Object.getOwnPropertyDescriptor(
     globalThis,
     "document",
   );
   const windowTarget = new EventTarget();
+  if (pointerEvents)
+    Object.defineProperty(windowTarget, "PointerEvent", { value: Event });
   const documentTarget = new TestDocument();
   Object.defineProperty(globalThis, "window", {
     value: windowTarget,
@@ -54,6 +59,7 @@ function fixture(context: import("node:test").TestContext) {
     right = new Control(),
     jump = new Control(),
     viewport = new Control();
+  viewport.tagName = "DIV";
   let paused = 0;
   let playing = true;
   const controller = new InputController({
@@ -216,4 +222,126 @@ test("context menu and active touch scrolling are canceled; right click never mo
     }),
   );
   assert.equal(f.controller.readFrame().left, false);
+});
+
+test("a long viewport hold persists for 600 frames and releases outside the canvas", (context) => {
+  const f = fixture(context);
+  f.viewport.setPointerCapture = () => {
+    throw new Error("capture unavailable");
+  };
+  f.viewport.dispatchEvent(
+    event("pointerdown", { pointerId: 8, clientX: 140, pointerType: "touch" }),
+  );
+  for (let frame = 0; frame < 600; frame++) {
+    assert.deepEqual(f.controller.readFrame(), {
+      left: true,
+      right: false,
+      jumpHeld: false,
+      jumpPressed: false,
+    });
+  }
+  f.windowTarget.dispatchEvent(
+    event("pointermove", { pointerId: 8, clientX: 420 }),
+  );
+  assert.equal(f.controller.readFrame().right, true);
+  f.windowTarget.dispatchEvent(event("pointerup", { pointerId: 8 }));
+  assert.equal(f.controller.readFrame().right, false);
+});
+
+test("native selection, callout gestures and dragging are blocked without breaking paused menu touches", (context) => {
+  const f = fixture(context);
+  for (const surface of [f.viewport, f.left, f.right, f.jump]) {
+    for (const name of [
+      "contextmenu",
+      "selectstart",
+      "dragstart",
+      "touchstart",
+      "touchmove",
+      "touchend",
+      "gesturestart",
+      "gesturechange",
+      "dblclick",
+    ]) {
+      const nativeEvent = event(name, {});
+      surface.dispatchEvent(nativeEvent);
+      assert.equal(nativeEvent.defaultPrevented, true, name);
+    }
+  }
+  f.windowTarget.dispatchEvent(new Event("blur"));
+  const menuTouch = event("touchstart", {});
+  f.viewport.dispatchEvent(menuTouch);
+  assert.equal(menuTouch.defaultPrevented, false);
+});
+
+test("global cancellation clears button holds and pagehide clears all input", (context) => {
+  const f = fixture(context);
+  f.left.dispatchEvent(event("pointerdown", { pointerId: 1 }));
+  f.windowTarget.dispatchEvent(event("pointercancel", { pointerId: 1 }));
+  assert.equal(f.controller.readFrame().left, false);
+  assert.equal(f.left.classes.has("pressed"), false);
+  f.right.dispatchEvent(event("pointerdown", { pointerId: 2 }));
+  f.windowTarget.dispatchEvent(new Event("pagehide"));
+  assert.equal(f.paused(), 1);
+  assert.equal(f.controller.readFrame().right, false);
+});
+
+test("legacy touch holds support multiple fingers, crossing sides and canceling outside", (context) => {
+  const f = fixture(context, false);
+  f.viewport.dispatchEvent(
+    event("touchstart", {
+      changedTouches: [
+        { identifier: 1, clientX: 140 },
+        { identifier: 2, clientX: 420 },
+      ],
+    }),
+  );
+  for (let frame = 0; frame < 600; frame++) {
+    const input = f.controller.readFrame();
+    assert.equal(input.left, true);
+    assert.equal(input.right, true);
+  }
+  f.windowTarget.dispatchEvent(
+    event("touchend", { changedTouches: [{ identifier: 1 }] }),
+  );
+  assert.equal(f.controller.readFrame().left, false);
+  assert.equal(f.controller.readFrame().right, true);
+  f.windowTarget.dispatchEvent(
+    event("touchmove", { changedTouches: [{ identifier: 2, clientX: 140 }] }),
+  );
+  assert.equal(f.controller.readFrame().left, true);
+  assert.equal(f.controller.readFrame().right, false);
+  f.windowTarget.dispatchEvent(
+    event("touchcancel", { changedTouches: [{ identifier: 2 }] }),
+  );
+  assert.equal(f.controller.readFrame().left, false);
+});
+
+test("legacy buttons and viewport cooperate and jump creates one edge per hold", (context) => {
+  const f = fixture(context, false);
+  f.viewport.dispatchEvent(
+    event("touchstart", { changedTouches: [{ identifier: 1, clientX: 140 }] }),
+  );
+  f.jump.dispatchEvent(
+    event("touchstart", { changedTouches: [{ identifier: 2 }] }),
+  );
+  assert.deepEqual(f.controller.readFrame(), {
+    left: true,
+    right: false,
+    jumpHeld: true,
+    jumpPressed: true,
+  });
+  f.jump.dispatchEvent(
+    event("touchstart", { changedTouches: [{ identifier: 3 }] }),
+  );
+  assert.equal(f.controller.readFrame().jumpPressed, false);
+  f.windowTarget.dispatchEvent(
+    event("touchend", { changedTouches: [{ identifier: 2 }] }),
+  );
+  assert.equal(f.controller.readFrame().jumpHeld, true);
+  f.windowTarget.dispatchEvent(
+    event("touchcancel", { changedTouches: [{ identifier: 3 }] }),
+  );
+  assert.equal(f.controller.readFrame().jumpHeld, false);
+  assert.equal(f.jump.classes.has("pressed"), false);
+  assert.equal(f.controller.readFrame().left, true);
 });
