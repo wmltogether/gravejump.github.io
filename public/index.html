@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#19171f" />
+    <meta
+      name="description"
+      content="坟头蹦迪 GRAVE JUMP：绿发贝斯少女从废弃音乐厅醒来，躲开坠落的雕像与十字架，跳出自己的返场。"
+    />
+    <title>坟头蹦迪 · GRAVE JUMP</title>
+    <link rel="icon" href="note.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <svg
+      class="svg-library"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <symbol id="heart" viewBox="0 0 24 24">
+          <path
+            d="M12 21C9 18 2 14 2 8a5 5 0 0 1 10-2A5 5 0 0 1 22 8c0 6-7 10-10 13Z"
+            fill="currentColor"
+          />
+        </symbol>
+        <symbol id="note" viewBox="0 0 24 24">
+          <path
+            d="M9 18V5l12-3v13M9 9l12-3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          />
+          <ellipse cx="5.5" cy="18" rx="4.5" ry="3" fill="currentColor" />
+          <ellipse cx="17.5" cy="15" rx="4.5" ry="3" fill="currentColor" />
+        </symbol>
+        <symbol id="up" viewBox="0 0 24 24">
+          <path
+            d="m5 13 7-7 7 7M12 6v15"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="arrow" viewBox="0 0 24 24">
+          <path
+            d="M4 12h15m-6-6 6 6-6 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="pause-icon" viewBox="0 0 24 24">
+          <path
+            d="M8 5v14m8-14v14"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+        </symbol>
+        <symbol id="sound-icon" viewBox="0 0 24 24">
+          <path
+            d="M4 9v6h4l5 4V5L8 9Zm12-2q7 5 0 10m-1-7q3 2 0 4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="shield" viewBox="0 0 24 24">
+          <path
+            d="m12 2 9 4v6q0 6-9 10Q3 18 3 12V6Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <path
+            d="m8 12 3 3 5-6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+        </symbol>
+        <symbol id="alert" viewBox="0 0 24 24">
+          <path
+            d="m12 2 10 19H2Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <path d="M12 8v6m0 2v2" stroke="currentColor" stroke-width="2" />
+        </symbol>
+        <symbol id="star" viewBox="0 0 24 24">
+          <path d="m12 1 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z" fill="currentColor" />
+        </symbol>
+        <symbol id="floor-icon" viewBox="0 0 24 24">
+          <path
+            d="M3 21h6v-6h6V9h6V3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </symbol>
+        <symbol id="disco" viewBox="0 0 24 24">
+          <path
+            d="M12 0v4M4 12h16M12 4q-7 8 0 16m0-16q7 8 0 16M5 8h14M5 16h14"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+          />
+          <circle
+            cx="12"
+            cy="12"
+            r="8"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+        </symbol>
+      </defs>
+    </svg>
+    <div class="page-glow" aria-hidden="true"></div>
+    <header>
+      <a class="wordmark" href="./"
+        ><svg><use href="#disco" /></svg>坟头蹦迪<span>GRAVE JUMP</span></a
+      >
+      <button id="help" class="round-button" aria-label="游戏说明">?</button>
+    </header>
+    <main>
+      <div class="game-layout">
+        <section class="game-card" aria-label="坟头蹦迪游戏">
+          <div class="game-toolbar">
+            <span class="live-label"><i></i> 自动跳跃</span>
+            <div class="stats">
+              <span aria-label="高度"
+                ><svg><use href="#up" /></svg><b id="height">000</b
+                ><small>m</small></span
+              ><span aria-label="音符"
+                ><svg><use href="#note" /></svg><b id="notes">0</b></span
+              ><span aria-label="层数"
+                ><svg><use href="#floor-icon" /></svg><b id="zone">00</b></span
+              >
+            </div>
+            <div class="toolbar-actions">
+              <button
+                id="sound"
+                class="round-button muted"
+                aria-label="打开声音"
+                aria-pressed="false"
+              >
+                <svg><use href="#sound-icon" /></svg></button
+              ><button
+                id="pause"
+                class="round-button"
+                aria-label="暂停游戏"
+                disabled
+              >
+                <svg><use href="#pause-icon" /></svg>
+              </button>
+            </div>
+          </div>
+          <div
+            id="game-viewport"
+            class="game-viewport"
+            tabindex="0"
+            aria-label="游戏画布；按住左半屏或右半屏移动，自动跳跃"
+          >
+            <div id="scene"></div>
+            <div
+              id="rocket-status"
+              class="rocket-status"
+              hidden
+              aria-label="火箭冲刺，免疫伤害"
+            >
+              <img src="rocket.svg" alt="火箭" /><b id="rocket-seconds">3.0</b
+              ><svg><use href="#shield" /></svg
+              ><span class="rocket-track"><i id="rocket-meter"></i></span>
+            </div>
+            <div class="screen-vignette" aria-hidden="true"></div>
+            <div class="canvas-corner corner-left" aria-hidden="true">←</div>
+            <div class="canvas-corner corner-right" aria-hidden="true">→</div>
+            <div
+              id="damage-callout"
+              class="damage-callout"
+              aria-label="失去一颗生命"
+            >
+              <svg><use href="#heart" /></svg><b>−1</b>
+            </div>
+            <div id="heal-callout" class="heal-callout" role="status"></div>
+            <div id="milestone" class="milestone" role="status"></div>
+            <div id="overlay" class="overlay">
+              <div class="overlay-card" data-mode="ready">
+                <span class="ticket-edge"></span>
+                <p id="overlay-label" class="sr-only"></p>
+                <img
+                  src="bassist.svg"
+                  class="menu-character"
+                  alt="绿发长发、身穿水手服、抱着红色贝斯的 chibi 少女"
+                  width="120"
+                  height="150"
+                />
+                <h2 id="overlay-title">坟头蹦迪</h2>
+                <p id="overlay-description">自动跳跃 · 左右移动 · 躲避坠落物</p>
+                <div id="results" class="results" hidden>
+                  <div>
+                    <strong id="final-height">0</strong><span>本次高度</span>
+                  </div>
+                  <div>
+                    <strong id="final-notes">0</strong><span>收集音符</span>
+                  </div>
+                </div>
+                <p id="load-status">加载中…</p>
+                <button id="start" class="primary-button" disabled>
+                  开始游戏 <svg><use href="#arrow" /></svg></button
+                ><button id="secondary" class="secondary-button" hidden>
+                  重新开始
+                </button>
+                <p id="overlay-tip" class="overlay-tip">
+                  触屏按住左 / 右侧移动
+                </p>
+              </div>
+            </div>
+          </div>
+          <div id="life-panel" class="life-panel">
+            <span class="life-label">生命</span>
+            <div class="heart-meter">
+              <div
+                id="lives"
+                class="lives"
+                role="group"
+                aria-label="剩余生命 5"
+              >
+                <span data-heart="0" class="life-heart is-full"
+                  ><svg><use href="#heart" /></svg></span
+                ><span data-heart="1" class="life-heart is-full"
+                  ><svg><use href="#heart" /></svg></span
+                ><span data-heart="2" class="life-heart is-full"
+                  ><svg><use href="#heart" /></svg></span
+                ><span data-heart="3" class="life-heart is-full"
+                  ><svg><use href="#heart" /></svg></span
+                ><span data-heart="4" class="life-heart is-full"
+                  ><svg><use href="#heart" /></svg
+                ></span>
+              </div>
+              <span class="life-count"><b id="life-count">5</b>/5</span>
+            </div>
+            <span id="health-state-icon" class="health-state-icon" role="img"
+              ><svg><use href="#star" /></svg></span
+            ><span id="health-status" class="sr-only"></span
+            ><span id="health-detail" class="sr-only"></span>
+          </div>
+          <div class="touch-controls">
+            <div>
+              <button id="left" aria-label="向左移动">←</button
+              ><button id="right" aria-label="向右移动">→</button>
+            </div>
+            <span
+              ><svg><use href="#note" /></svg> </span
+            ><button id="jump" aria-label="手动起跳">
+              <svg><use href="#up" /></svg>
+            </button>
+          </div>
+          <div class="game-caption">
+            <span id="game-status" class="sr-only">舞台已准备好。</span
+            ><span><kbd>←</kbd> <kbd>→</kbd> 移动</span
+            ><span><kbd>Space</kbd> 起跳 · <kbd>P</kbd> 暂停</span>
+          </div>
+        </section>
+        <aside class="side-panel">
+          <section class="music-card">
+            <div class="card-heading">
+              <h3>音乐进度</h3>
+              <span id="music-stage">00 / 05</span>
+            </div>
+            <div class="music-stages">
+              <div data-tier="1">
+                <svg><use href="#note" /></svg><b>10</b>
+              </div>
+              <div data-tier="2"><span>▂▆▃</span><b>20</b></div>
+              <div data-tier="3"><span>◭</span><b>30</b></div>
+              <div data-tier="4"><span>≋</span><b>40</b></div>
+              <div data-tier="5">
+                <svg><use href="#disco" /></svg><b>50</b>
+              </div>
+            </div>
+            <p>每 10 层解锁一重效果</p>
+          </section>
+          <section class="record-card">
+            <div class="card-heading">
+              <h3>最高纪录</h3>
+            </div>
+            <div class="best-value">
+              <strong id="best">0</strong><span>m</span
+              ><svg><use href="#up" /></svg>
+            </div>
+            <div class="record-line">
+              <span>下一目标</span><b id="next-goal">100 m</b>
+            </div>
+            <div class="progress-track"><div id="best-progress"></div></div>
+          </section>
+          <section class="guide-card">
+            <div class="card-heading"><h3>操作</h3></div>
+            <div class="simple-control">
+              <span><kbd>←</kbd> <kbd>→</kbd> / A D</span><b>移动</b>
+            </div>
+            <div class="simple-control">
+              <span><kbd>Space</kbd> / ↑</span><b>起跳</b>
+            </div>
+            <div class="simple-control">
+              <span><kbd>P</kbd> / Esc</span><b>暂停</b>
+            </div>
+            <p class="mobile-hint">触屏：按住画布左 / 右侧</p>
+            <div class="item-row">
+              <span
+                ><img src="hazard-rock.svg" alt="落石" /><img
+                  src="hazard-statue.svg"
+                  alt="希腊雕像" /><img
+                  src="hazard-cross.svg"
+                  alt="十字架" /></span
+              ><b>躲避</b>
+            </div>
+            <div class="item-row">
+              <img src="cucumber.svg" alt="黄瓜" /><b
+                >+1 <svg><use href="#heart" /></svg
+              ></b>
+            </div>
+            <div class="item-row">
+              <img src="rocket.svg" alt="火箭" /><b
+                >3s ↑ <svg><use href="#shield" /></svg
+              ></b>
+            </div>
+            <div class="item-row">
+              <img src="penguin.svg" alt="蓝色企鹅" /><b>↓ 踩踏</b>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <div
+      id="announcement"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+    ></div>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 800" fill="none">
+<defs><linearGradient id="wall" x2="0" y2="1"><stop stop-color="#242235"/><stop offset="1" stop-color="#1a1928"/></linearGradient><linearGradient id="glass" x2="0" y2="1"><stop stop-color="#77769a" stop-opacity=".5"/><stop offset="1" stop-color="#3a4857" stop-opacity=".12"/></linearGradient></defs>
+<path fill="url(#wall)" d="M0 0h840v800H0z"/>
+<g stroke="#454052" stroke-width="2" opacity=".7"><path d="M0 84h840M0 110h840M0 480h840M0 500h840M0 760h840"/><path d="M30 0v800m780-800v800M67 0v800m706-800v800"/></g>
+<g stroke="#5a5267" stroke-width="2"><path d="M125 450V248c0-160 180-160 180 0v202Zm410 0V248c0-160 180-160 180 0v202Z" fill="#1b1c2b"/><path d="M140 433V249c0-135 150-135 150 0v184Zm410 0V249c0-135 150-135 150 0v184Z" fill="url(#glass)"/><path d="M215 154v278m-75-160h150m335-118v278m-75-160h150" stroke="#605a6c"/><path d="m148 324 133-133m-136 60 141 139m271-66 133-133m-133 60 141 139" stroke="#707187" opacity=".25"/></g>
+<g fill="#393547" stroke="#555060" stroke-width="1.5"><path d="M91 145h32v330H91Zm214 0h32v330h-32Zm198 0h32v330h-32Zm214 0h32v330h-32Z"/><path d="M82 132h50v17H82Zm214 0h50v17h-50Zm198 0h50v17h-50Zm214 0h50v17h-50Z"/><path d="M84 464h48v16H84Zm214 0h48v16h-48Zm198 0h48v16h-48Zm214 0h48v16h-48Z"/></g>
+<g stroke="#74687c" opacity=".3"><path d="M102 160v292m10-292v292m204-292v292m10-292v292m189-292v292m10-292v292m204-292v292m10-292v292"/></g>
+<path d="M370 481V158c0-83 100-83 100 0v323Z" fill="#151722" stroke="#5b5266" stroke-width="3"/><path d="M385 470V161c0-63 70-63 70 0v309Z" fill="#232a36"/><path d="M420 115v350m-35-240h70m-70 100h70" stroke="#b3bfba" stroke-opacity=".15" stroke-width="2"/>
+<path d="m377 188 13 27-6 33 16 20m-190 59-14 21 5 31-18 18m483-210-13 20 8 19-16 22M70 571l20 13-7 25 12 24m625-55-17 29 8 33-14 30" stroke="#12131f" stroke-width="3"/>
+<g stroke="#413a4c" fill="#262432"><path d="M130 736V627q0-83 83-83t83 83v109Zm414 0V627q0-83 83-83t83 83v109Z"/><path d="M153 716v-90q0-62 60-62t60 62v90Zm414 0v-90q0-62 60-62t60 62v90Z"/></g>
+<path d="M0 0h46v800H0Zm794 0h46v800h-46Z" fill="#211c2b"/><path d="M7 0c55 135-26 267 24 400C4 529 43 665 19 800m804-800c-55 135 26 267-24 400 27 129-12 265 12 400" stroke="#513343" stroke-width="18" opacity=".6"/>
+<g fill="#b4b2bf" opacity=".13"><circle cx="173" cy="78" r="1.2"/><circle cx="681" cy="533" r="1.5"/><circle cx="359" cy="399" r="1"/><circle cx="440" cy="706" r="1.4"/><circle cx="256" cy="576" r="1"/></g>
+</svg>

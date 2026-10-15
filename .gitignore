@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.artifacts/
+.openai/
+.test-build/
+test-results/
+site*.tar.gz
+site.zip
+preview*.png
+original-download-dist.zip

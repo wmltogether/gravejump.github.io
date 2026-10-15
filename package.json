@@ -1,0 +1,29 @@
+{
+  "name": "grave-jump",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --experimental-strip-types scripts/serve.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test --test-isolation=none tests/engine.test.ts tests/input.test.ts tests/health.test.ts tests/render.test.ts",
+    "build": "npm run typecheck && node --experimental-strip-types scripts/build.ts",
+    "check": "npm run typecheck && npm test && node --experimental-strip-types scripts/build.ts && npm run verify:output",
+    "verify:output": "node --experimental-strip-types scripts/verify-output.ts",
+    "format": "prettier --write src tests scripts public package.json tsconfig.json",
+    "clean": "node --experimental-strip-types scripts/clean.ts",
+    "predev": "npm run build"
+  },
+  "dependencies": {
+    "pixi.js": "8.6.6"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@types/node": "24.0.0",
+    "esbuild": "0.25.12",
+    "prettier": "3.6.2"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
