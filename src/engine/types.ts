@@ -39,6 +39,8 @@ export interface Platform {
 export interface FallingHazard {
   source?: "sky" | "penguin";
   ownerId?: number;
+  /** A newly thrown stone becomes damaging only after leaving its thrower's body. */
+  clearedThrower?: boolean;
   vx?: number;
   kind?: HazardKind;
   x: number;
@@ -75,6 +77,8 @@ export interface Penguin {
   x: number;
   y: number;
   alive: boolean;
+  /** Fixed at spawn; throwing and art never track the player's position. */
+  facing: 1 | -1;
   throwTimer: number;
 }
 

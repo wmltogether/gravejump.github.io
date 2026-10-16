@@ -328,17 +328,22 @@ export class Game {
         kind: "rock",
         source: "penguin",
         ownerId: enemy.id,
-        x: enemy.x,
+        clearedThrower: false,
+        x: enemy.x + enemy.facing * 16,
         y: enemy.y - 34,
-        prevX: enemy.x,
+        prevX: enemy.x + enemy.facing * 16,
         prevY: enemy.y - 34,
-        vx: clamp((this.player.x - enemy.x) * 0.9, -230, 230),
-        vy: clamp((this.player.y - 65 - enemy.y) * 0.55, -260, 140),
+        vx: enemy.facing * C.PENGUIN_STONE_SPEED_X,
+        vy: -C.PENGUIN_STONE_SPEED_Y,
         r: 12,
         rotation: 0,
         spin: 2.4,
       });
-      this.events.push({ type: "throw", x: enemy.x, y: enemy.y - 34 });
+      this.events.push({
+        type: "throw",
+        x: enemy.x + enemy.facing * 16,
+        y: enemy.y - 34,
+      });
     }
   }
 
@@ -407,6 +412,7 @@ export class Game {
           x,
           y: platform.y,
           alive: true,
+          facing: x <= C.WIDTH / 2 ? 1 : -1,
           throwTimer: 1.2,
         });
       if (level % C.STAR_FLOOR_INTERVAL === C.STAR_FIRST_FLOOR)
@@ -537,9 +543,12 @@ export class Game {
       rock.prevY = rock.y;
       rock.prevRotation = rock.rotation;
       rock.x += (rock.vx ?? 0) * dt;
-      rock.vy += (rock.source === "penguin" ? 420 : C.ROCK_GRAVITY) * dt;
+      rock.vy +=
+        (rock.source === "penguin" ? C.PENGUIN_STONE_GRAVITY : C.ROCK_GRAVITY) *
+        dt;
       rock.y += rock.vy * dt;
       rock.rotation += rock.spin * dt;
+      if (this.isLaunchProtected(rock)) continue;
       if (
         rock.hit ||
         this.invulnerable > 0 ||
@@ -550,6 +559,28 @@ export class Game {
       this.takeHazardHit(rock);
       if (this.status === "over") return;
     }
+  }
+
+  /** The held/releasing stone must not turn harmless body contact into damage. */
+  private isLaunchProtected(rock: FallingHazard): boolean {
+    if (rock.source !== "penguin" || rock.clearedThrower !== false)
+      return false;
+    const owner = this.penguins.find(
+      (enemy) => enemy.id === rock.ownerId && enemy.alive,
+    );
+    if (!owner) {
+      rock.clearedThrower = true;
+      return false;
+    }
+    const overlapsBody =
+      Math.abs(rock.x - owner.x) <= C.PENGUIN_DRAW_WIDTH / 2 + rock.r &&
+      rock.y + rock.r >=
+        owner.y - C.PENGUIN_DRAW_HEIGHT * C.PENGUIN_DRAW_ANCHOR_Y &&
+      rock.y - rock.r <=
+        owner.y + C.PENGUIN_DRAW_HEIGHT * (1 - C.PENGUIN_DRAW_ANCHOR_Y);
+    if (!overlapsBody) rock.clearedThrower = true;
+    // Also skip the crossing step: its sweep still starts inside the thrower.
+    return true;
   }
 
   private scheduleHazard(): void {

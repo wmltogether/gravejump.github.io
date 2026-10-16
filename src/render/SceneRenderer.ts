@@ -316,8 +316,8 @@ export async function createSceneRenderer(
       },
       (v, e) => {
         v.position.set(e.x, e.y - game.cameraY);
-        v.scale.x = Math.abs(v.scale.x) * (game.player.x < e.x ? -1 : 1);
-        v.rotation = !reduced && e.throwTimer < 0.3 ? -0.12 : 0;
+        v.scale.x = Math.abs(v.scale.x) * e.facing;
+        v.rotation = !reduced && e.throwTimer < 0.3 ? -0.12 * e.facing : 0;
       },
     );
     const p = game.player;

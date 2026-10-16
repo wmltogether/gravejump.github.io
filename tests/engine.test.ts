@@ -66,6 +66,7 @@ test("golden star heals to five, clears even partly visible penguins and their s
     platformId: 900 + i,
     ...p,
     alive: true,
+    facing: 1 as const,
     throwTimer: 0,
   }));
   g.platforms.push(
@@ -169,7 +170,15 @@ test("pre-generated offscreen penguins cannot enter view during the star effect"
     moving: false,
   });
   g.penguins = [
-    { id: 900, platformId: 900, x: 220, y: -100, alive: true, throwTimer: 0 },
+    {
+      id: 900,
+      platformId: 900,
+      x: 220,
+      y: -100,
+      alive: true,
+      facing: 1,
+      throwTimer: 0,
+    },
   ];
   eatStar(g);
   assert.equal(g.penguins.length, 1);
@@ -696,7 +705,15 @@ function penguinFixture() {
   });
   g.pickups = [];
   g.penguins = [
-    { id: 1, platformId: 0, x: 420, y: 550, alive: true, throwTimer: 999 },
+    {
+      id: 1,
+      platformId: 0,
+      x: 420,
+      y: 550,
+      alive: true,
+      facing: 1,
+      throwTimer: 999,
+    },
   ];
   return g;
 }
@@ -832,12 +849,122 @@ test("upward passage and a late diagonal crossing do not stomp a penguin", () =>
   assert.equal(side.penguins.length, 1);
 });
 
-test("penguins throw moving rocks toward the player, and a hit removes exactly one heart", () => {
+test("penguin body contact from below or either side cannot cause launch-frame damage", () => {
+  for (const [x, y, vy] of [
+    [420, 600, -400],
+    [392, 550, 0],
+    [448, 550, 0],
+  ]) {
+    const g = penguinFixture();
+    g.penguins[0].throwTimer = 0;
+    airborne(g, x, y, vy);
+    g.step(dt);
+    assert.equal(g.lives, 5, `body contact at ${x},${y}`);
+    assert.equal(g.invulnerable, 0);
+    assert.equal(g.penguins.length, 1);
+    assert.ok(
+      !g.drainEvents().some((e) => e.type === "hit" || e.type === "stomp"),
+    );
+  }
+});
+
+test("released penguin stones remain harmful even when returning next to the thrower", () => {
+  const g = penguinFixture();
+  airborne(g, 510, 550, 0);
+  g.penguins[0].throwTimer = 0;
+  g.step(dt);
+  const stone = g.hazards.find((h) => h.ownerId === 1)!;
+  assert.equal(stone.clearedThrower, false);
+  stone.x = 600;
+  stone.y = 520;
+  stone.vx = stone.vy = 0;
+  g.step(dt);
+  assert.equal(stone.clearedThrower, true);
+  g.player.x = 420;
+  stone.x = 420;
+  stone.y = 520;
+  stone.vx = stone.vy = 0;
+  g.step(dt);
+  assert.equal(g.lives, 4);
+  assert.ok(g.drainEvents().some((e) => e.type === "hit"));
+});
+
+test("penguin launch speed ignores the player's position, including later throws", () => {
+  for (const facing of [-1, 1] as const) {
+    const launches = [];
+    for (const [x, y] of [
+      [100, 650],
+      [740, 400],
+    ]) {
+      const g = penguinFixture();
+      g.invulnerable = 999;
+      g.penguins[0].facing = facing;
+      airborne(g, x, y, 0);
+      g.penguins[0].throwTimer = 0;
+      g.step(dt);
+      const first = g.hazards.find((h) => h.ownerId === 1)!;
+      launches.push([first.vx, first.vy]);
+      g.hazards = [];
+      g.player.x = C.WIDTH - x;
+      g.penguins[0].throwTimer = 0;
+      g.step(dt);
+      const second = g.hazards.find((h) => h.ownerId === 1)!;
+      assert.deepEqual([second.vx, second.vy], [first.vx, first.vy]);
+    }
+    assert.deepEqual(launches[0], launches[1]);
+    assert.equal(launches[0][0], facing * C.PENGUIN_STONE_SPEED_X);
+    assert.ok(launches[0][1]! < 0);
+  }
+});
+
+test("penguin stones follow a gravity arc without steering as the player crosses sides", () => {
+  for (const facing of [-1, 1] as const) {
+    const g = penguinFixture();
+    g.platforms[0].w = C.WIDTH;
+    g.player.y = 550;
+    g.invulnerable = 999;
+    g.penguins[0].facing = facing;
+    g.penguins[0].throwTimer = 0;
+    const launchX = 420 + facing * 16,
+      launchY = 550 - 34;
+    let minimumY = launchY;
+    for (let n = 1; n <= 144; n++) {
+      g.player.x = n % 40 < 20 ? 100 : 740;
+      g.step(dt);
+      const stone = g.hazards.find((h) => h.ownerId === 1)!;
+      assert.ok(stone);
+      const expectedX = launchX + facing * C.PENGUIN_STONE_SPEED_X * n * dt;
+      const expectedY =
+        launchY -
+        C.PENGUIN_STONE_SPEED_Y * n * dt +
+        (C.PENGUIN_STONE_GRAVITY * dt * dt * n * (n + 1)) / 2;
+      assert.ok(Math.abs(stone.x - expectedX) < 1e-7);
+      assert.ok(Math.abs(stone.y - expectedY) < 1e-7);
+      assert.equal(stone.vx, facing * C.PENGUIN_STONE_SPEED_X);
+      minimumY = Math.min(minimumY, stone.y);
+      if (n === 144) {
+        assert.ok(stone.vy > 0);
+        assert.ok(stone.y > launchY);
+      }
+    }
+    assert.ok(minimumY < launchY - 80);
+  }
+});
+
+test("penguins throw upward along their facing direction, and a hit removes exactly one heart", () => {
   const g = game();
   g.pickups = [];
   g.player.x = 510;
   g.penguins = [
-    { id: 1, platformId: 0, x: 420, y: 650, alive: true, throwTimer: 0 },
+    {
+      id: 1,
+      platformId: 0,
+      x: 420,
+      y: 650,
+      alive: true,
+      facing: 1,
+      throwTimer: 0,
+    },
   ];
   g.step(dt, {});
   const stone = g.hazards.find((h) => h.source === "penguin")!;
